@@ -23,19 +23,24 @@ void flag_0(int filopen, int filout, size_t boxsiz, off_t filsiz)
     char *buff = new char[boxsiz];
     off_t totfill = 0;
     ssize_t rdbyt;
+    
+    
     while ((rdbyt = read(filopen, buff, boxsiz)) > 0)
     {
         rev(buff, rdbyt);
         if (write(filout, buff, rdbyt) != rdbyt)
         {
-            cout << "Error writing to output file";
+            perror("Error writing to output file");
             close(filopen);
             close(filout);
             delete[] buff;
+            return;
         }
         totfill += rdbyt;
         printprog(totfill, filsiz);
     }
+    
+    
     delete[] buff;
     cout << endl;
 }
@@ -46,6 +51,7 @@ void flag_1(int filopen, int filout, off_t filsiz)
     char *buff = new char[boxsiz];
     off_t totfill = 0;
     off_t idx = filsiz;
+
 
     while (idx > 0)
     {
@@ -66,14 +72,17 @@ void flag_1(int filopen, int filout, off_t filsiz)
 
         if (write(filout, buff, rdbyt) != rdbyt)
         {
-            cout << "Error writing to output file";
+            perror("Error writing to output file");
             close(filopen);
             close(filout);
             delete[] buff;
+            return;
         }
         totfill += rdbyt;
         printprog(totfill, filsiz);
     }
+    
+    
     delete[] buff;
     cout << endl;
 }
@@ -83,8 +92,9 @@ void flag_2(int filopen, int filout, off_t filsiz, off_t start, off_t end)
     const size_t boxsiz = 4096;
     char *buff = new char[boxsiz];
     off_t totfill = 0;
-
     off_t idx = start;
+
+
     while (idx > 0)
     {
         size_t rdbyt;
@@ -96,23 +106,31 @@ void flag_2(int filopen, int filout, off_t filsiz, off_t start, off_t end)
         {
             rdbyt = idx;
         }
+        
+        
         idx -= rdbyt;
         lseek(filopen, idx, SEEK_SET);
         read(filopen, buff, rdbyt);
         rev(buff, rdbyt);
+        
+        
         if (write(filout, buff, rdbyt) != rdbyt)
         {
-            cout << "Error writing to output file";
+            perror("Error writing to output file");
             close(filopen);
             close(filout);
             delete[] buff;
+            return;
         }
         totfill += rdbyt;
         printprog(totfill, filsiz);
     }
 
+
     off_t cpydata = end - start + 1;
     lseek(filopen, start, SEEK_SET);
+    
+    
     while (cpydata > 0)
     {
         size_t rdbyt;
@@ -124,21 +142,27 @@ void flag_2(int filopen, int filout, off_t filsiz, off_t start, off_t end)
         {
             rdbyt = cpydata;
         }
+        
         read(filopen, buff, rdbyt);
+        
         if (write(filout, buff, rdbyt) != rdbyt)
         {
-            cout << "Error writing to output file";
+            perror("Error writing to output file");
             close(filopen);
             close(filout);
             delete[] buff;
+            return;
         }
         cpydata -= rdbyt;
         totfill += rdbyt;
         printprog(totfill, filsiz);
     }
 
+
     idx = filsiz - end - 1;
     off_t ptr = filsiz;
+    
+    
     while (idx > 0)
     {
         size_t rdbyt;
@@ -159,6 +183,8 @@ void flag_2(int filopen, int filout, off_t filsiz, off_t start, off_t end)
         totfill += rdbyt;
         printprog(totfill, filsiz);
     }
+
+    
     delete[] buff;
     cout << endl;
 }
@@ -170,13 +196,15 @@ int main(int argc, char *argv[])
     {
         if (errno != EEXIST)
         {
-            cout << "Error creating directory: ";
+            perror("Error creating directory: ");
+            return 1;
         }
     }
 
     if (argc < 3)
     {
-        cout << "Enter the correct number of arguments";
+        cout << "Enter the correct number of arguments" << endl;
+        return 1;
     }
 
     const char *inpufil = argv[1];
@@ -186,20 +214,24 @@ int main(int argc, char *argv[])
 
     if (filopen == -1)
     {
-        cout << "File not found";
+        perror("File not found");
+        return 1;
     }
 
     off_t filsiz = lseek(filopen, 0, SEEK_END);
     lseek(filopen, 0, SEEK_SET);
     // cout << "File size: " << filsiz << " bytes";
+    
     if (filsiz <= 0)
     {
-        cout << "File is empty";
+        cout << "File is empty" << endl;
         close(filopen);
+        return 1;
     }
+    
+    
     string filpath = inpufil;
     size_t last = filpath.find_last_of('/');
-
     string filnam;
 
     if (last < filpath.length())
@@ -210,35 +242,40 @@ int main(int argc, char *argv[])
     {
         filnam = filpath;
     }
+    
+
     // cout << "File name: " << filnam;
-
-    string outpath = "Assignment1/" + to_string(flag) + filnam;
-
+    string outpath = "Assignment1/" + to_string(flag) + "_" + filnam;
     // cout<< "Output file path: " << outpath << endl;
+
 
     int filout = open(outpath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
     if (filout == -1)
     {
-        cout << "Error creating output file";
+        perror("Error creating output file");
         close(filopen);
+        return 1;
     }
+
 
     if (flag == 0)
     {
         if (argc < 4)
         {
-            cout << "Enter the correct number of arguments";
+            cout << "Enter the correct number of arguments" << endl;
             close(filopen);
             close(filout);
+            return 1;
         }
-
+        
         size_t boxsiz = atoi(argv[3]);
         if (boxsiz <= 0)
         {
-            cout << "Box size must be greater than 0";
+            cout << "Box size must be greater than 0" << endl;
             close(filopen);
             close(filout);
+            return 1;
         }
         flag_0(filopen, filout, boxsiz, filsiz);
     }
@@ -246,9 +283,10 @@ int main(int argc, char *argv[])
     {
         if (argc != 3)
         {
-            cout << "Enter the correct number of arguments";
+            cout << "Enter the correct number of arguments" << endl;
             close(filopen);
             close(filout);
+            return 1;
         }
         flag_1(filopen, filout, filsiz);
     }
@@ -256,22 +294,29 @@ int main(int argc, char *argv[])
     {
         if (argc != 5)
         {
-            cout << "Enter the correct number of arguments";
+            cout << "Enter the correct number of arguments" << endl;
             close(filopen);
             close(filout);
+            return 1;
         }
+        
+        
         off_t start = atoi(argv[3]);
         off_t end = atoi(argv[4]);
+        
+        
         if (start < 0 || end < 0 || start >= filsiz || end >= filsiz || start > end)
         {
-            cout << "Invalid start or end position";
+            cout << "Invalid start or end position" << endl;
             close(filopen);
             close(filout);
+            return 1;
         }
         flag_2(filopen, filout, filsiz, start, end);
     }
     else
     {
-        cout << "Invalid flag value";
+        cout << "Invalid flag value" << endl;
+        return 1;
     }
 }
