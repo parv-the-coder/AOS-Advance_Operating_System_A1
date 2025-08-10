@@ -200,7 +200,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
         proc += rdbyt;
     }
 
-    idx = end - start + 1;
+    idx = filsiz - (end + 1);
     proc = 0;
 
     while (proc < idx)
@@ -214,8 +214,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
         {
             rdbyt = idx - proc;
         }
-
-        if (lseek(filold, idx - proc - rdbyt, SEEK_SET) == -1 || lseek(filnew, end + 1 + idx, SEEK_SET) == -1)
+        if (lseek(filold, end + 1 + proc, SEEK_SET) == -1 || lseek(filnew, filsiz - proc - rdbyt, SEEK_SET) == -1)
         {
             delete[] boxin;
             delete[] boxout;
