@@ -28,6 +28,7 @@ void flag_0(int filopen, int filout, size_t boxsiz, off_t filsiz)
     while ((rdbyt = read(filopen, buff, boxsiz)) > 0)
     {
         rev(buff, rdbyt);
+
         if (write(filout, buff, rdbyt) != rdbyt)
         {
             perror("Error writing to output file");
