@@ -34,9 +34,9 @@ g++ 2025202019_A1_Q1.cpp
 
 | Flag  | Description            | Additional Arguments        | Output File Name            | Example                    |
 | ----- | ---------------------- | --------------------------- | --------------------------- | -------------------------- |
-| **0** | Block-wise reversal    | `<block size>`              | `Assignment1/0<input file>` | `./a.out input.txt 0 1024` |
-| **1** | Full file reversal     | _(none)_                    | `Assignment1/1<input file>` | `./a.out input.txt 1`      |
-| **2** | Partial range reversal | `<start index> <end index>` | `Assignment1/2<input file>` | `./a.out input.txt 2 5 10` |
+| **0** | Block-wise reversal    | `<block size>`              | `Assignment1/0_<input file>` | `./a.out input.txt 0 1024` |
+| **1** | Full file reversal     | _(none)_                    | `Assignment1/1_<input file>` | `./a.out input.txt 1`      |
+| **2** | Partial range reversal | `<start index> <end index>` | `Assignment1/2_<input file>` | `./a.out input.txt 2 5 10` |
 
 ---
 
@@ -149,7 +149,7 @@ order      end in chunks
 ```
 
 **input.txt**: `ABCDEFGH`  
-**Output file (0input.txt)**: `DCBAHGFE`
+**Output file (0_input.txt)**: `DCBAHGFE`
 
 ---
 
@@ -160,7 +160,7 @@ order      end in chunks
 ```
 
 **input.txt**: `Hello, World!`  
-**Output file (1input.txt)**: `!dlroW ,olleH`
+**Output file (1_input.txt)**: `!dlroW ,olleH`
 
 ---
 
@@ -171,7 +171,7 @@ order      end in chunks
 ```
 
 **input.txt**: `Hello, World!`  
-**Output file (2input.txt)**: `eHllo, W!dlro`
+**Output file (2_input.txt)**: `eHllo, W!dlro`
 
 ---
 
