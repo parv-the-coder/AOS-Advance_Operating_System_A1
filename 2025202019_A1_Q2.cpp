@@ -1,16 +1,19 @@
 #include <iostream>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <cstring>
+#include <sys/stat.h> //file status
+#include <fcntl.h>    //file control options
+#include <unistd.h>   //(read, write, close, lseek)
+#include <cstring>    //memcmp
 using namespace std;
 
+// check if the directory exists
 bool dircheck(const char *dir)
 {
     struct stat stats;
     return (stat(dir, &stats) == 0 && S_ISDIR(stats.st_mode));
 }
 
+// verify if the contents of the file are processed correctly for flag 0
+// Reads boxes from both files, reverses output box,and compares with the input box.
 bool concheck_0(int filold, int filnew, size_t boxsiz)
 {
     char *boxin = new char[boxsiz];
@@ -20,6 +23,8 @@ bool concheck_0(int filold, int filnew, size_t boxsiz)
     while ((rdbytout = read(filnew, boxout, boxsiz)) > 0)
     {
         rdbyin = read(filold, boxin, boxsiz);
+
+        // if box sizes are not equal, file don't match
         if (rdbyin != rdbytout)
         {
             delete[] boxin;
@@ -27,11 +32,13 @@ bool concheck_0(int filold, int filnew, size_t boxsiz)
             return false;
         }
 
+        // reverse the output box
         for (size_t i = 0; i < rdbytout / 2; i++)
         {
             swap(boxout[i], boxout[rdbytout - i - 1]);
         }
 
+        // compare with the input box
         if (memcmp(boxin, boxout, rdbytout) != 0)
         {
             delete[] boxin;
@@ -44,6 +51,8 @@ bool concheck_0(int filold, int filnew, size_t boxsiz)
     return true;
 }
 
+// verify if the contents of the file are processed correctly for flag 1
+// compares each box of original file with the reversed box of output file
 bool concheck_1(int filold, int filnew, off_t filsiz)
 {
     size_t boxsiz = 4096;
@@ -71,6 +80,7 @@ bool concheck_1(int filold, int filnew, off_t filsiz)
             return false;
         }
 
+        // move pointer in output file to the correct position
         off_t ptr = filsiz - idx - rdbyt;
         if (lseek(filnew, ptr, SEEK_SET) == -1)
         {
@@ -87,11 +97,13 @@ bool concheck_1(int filold, int filnew, off_t filsiz)
             return false;
         }
 
+        // reverse the output box
         for (size_t i = 0; i < rdbyt / 2; i++)
         {
             swap(boxout[i], boxout[rdbyt - i - 1]);
         }
 
+        // compare the input box with the reversed output box
         if (memcmp(boxin, boxout, rdbyt) != 0)
         {
             delete[] boxin;
@@ -100,12 +112,12 @@ bool concheck_1(int filold, int filnew, off_t filsiz)
         }
         idx += rdbyt;
     }
-
     delete[] boxin;
     delete[] boxout;
     return true;
 }
 
+// verify if the contents of the file are processed correctly for flag 2
 bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
 {
     size_t boxsiz = 4096;
@@ -114,6 +126,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
     off_t idx = start;
     off_t proc = 0;
 
+    // 1). before start - reversed
     while (proc < idx)
     {
         size_t rdbyt;
@@ -158,6 +171,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
         proc += rdbyt;
     }
 
+    // 2). should match exactly range[start,end]
     idx = end - start + 1;
     proc = 0;
 
@@ -200,6 +214,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
         proc += rdbyt;
     }
 
+    // 3). after end - reversed
     idx = filsiz - (end + 1);
     proc = 0;
 
@@ -250,6 +265,7 @@ bool concheck_2(int filold, int filnew, off_t filsiz, off_t start, off_t end)
     return true;
 }
 
+// compare sizes of both files
 bool filsizcheck(int filopen, int filnew)
 {
     off_t filsiz1 = lseek(filopen, 0, SEEK_END);
@@ -259,6 +275,7 @@ bool filsizcheck(int filopen, int filnew)
     return filsiz1 == filsiz2;
 }
 
+// display read/write/execute permission of a file
 void percheck(const char *route, const char *title)
 {
     struct stat stats;
@@ -295,6 +312,8 @@ int main(int argc, char *argv[])
     const char *dir = argv[3];
     int flag = atoi(argv[4]);
 
+    // checking directory  exist?
+    cout << endl;
     cout << "Directory is created? ";
     if (dircheck(dir))
     {
@@ -302,12 +321,13 @@ int main(int argc, char *argv[])
     }
     else
     {
-        cout << "No" << endl;
+        cout << "No Directory Found!!" << endl;
+        return 1;
     }
 
+    // opening files for reading
     int filold = open(orgfil, O_RDONLY);
     int filnew = open(outfil, O_RDONLY);
-
     if (filold == -1 || filnew == -1)
     {
         perror("Error opening files");
@@ -366,6 +386,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // displaying results
     cout << "Whether the file contents are correctly processed? ";
     if (con)
     {
@@ -386,8 +407,20 @@ int main(int argc, char *argv[])
         cout << "No" << endl;
     }
 
+    // check permissions
+    cout << endl;
+    cout << "Permissions of Directory:" << endl;
+    cout << "-------------------------------------------------" << endl;
     percheck(dir, "directory");
+
+    cout << endl;
+    cout << "Permissions of Original File:" << endl;
+    cout << "-------------------------------------------------" << endl;
     percheck(orgfil, "original file");
+
+    cout << endl;
+    cout << "Permissions of Output File:" << endl;
+    cout << "-------------------------------------------------" << endl;
     percheck(outfil, "output file");
 
     close(filold);
