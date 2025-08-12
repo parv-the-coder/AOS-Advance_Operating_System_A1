@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <filesystem>
 using namespace std;
 
 //  for displaying progress percentage
@@ -239,6 +240,13 @@ int main(int argc, char *argv[])
     catch (const exception &e)
     {
         cout << "Invalid flag value it should be numeric" << endl;
+        return 1;
+    }
+    
+    // checking input file is text file
+    if (std::filesystem::path(inpufil).extension() != ".txt")
+    {
+        cout << "Input file must be a .txt file" << endl;
         return 1;
     }
 
